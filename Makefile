@@ -31,7 +31,7 @@ CONFIG_SDL=y
 # not compile if gcc does not support the int128 type (32 bit hosts).
 CONFIG_INT128=y
 # build x86 emulator
-CONFIG_X86EMU=y
+#CONFIG_X86EMU=y
 # macOS build
 #CONFIG_MACOS=y
 # iOS build
