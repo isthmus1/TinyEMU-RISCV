@@ -67,8 +67,9 @@ Two configurations:
 
 - `guest/rv64-xwin.cfg`: the [JSLinux RV64 X Window guest][xwin] (Fluxbox, xterm, Dillo) at
   1024x640 with VirtIO keyboard and mouse. BIOS and kernel are local. **The root filesystem is
-  still served over HTTP by vfsync.org**, so it isn't hash-pinned and needs network access.
-  Replacing it with a local copy would also let `fs_net.c` and its curl/OpenSSL dependency go.
+  still served over HTTP by vfsync.org**, so it isn't hash-pinned and needs network access. The
+  network filesystem code is deliberately kept; the plan is to serve a local, hash-pinned mirror of
+  the same HTTP layout.
 - `guest/rv64-console.cfg`: Bellard's riscv64 disk image (busybox, ext2 root) on the serial
   console. Fully local.
 
