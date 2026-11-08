@@ -54,9 +54,6 @@
 #include "fs_utils.h"
 #include "fs_wget.h"
 #endif
-#ifdef CONFIG_SLIRP
-#include "slirp/libslirp.h"
-#endif
 
 #ifndef _WIN32
 
@@ -461,84 +458,6 @@ static EthernetDevice *tun_open(const char *ifname)
 
 #endif /* !_WIN32 && !__APPLE__ */
 
-#ifdef CONFIG_SLIRP
-
-/*******************************************************/
-/* slirp */
-
-static Slirp *slirp_state;
-
-static void slirp_write_packet(EthernetDevice *net,
-                               const uint8_t *buf, int len)
-{
-    Slirp *slirp_state = net->opaque;
-    slirp_input(slirp_state, buf, len);
-}
-
-int slirp_can_output(void *opaque)
-{
-    EthernetDevice *net = opaque;
-    return net->device_can_write_packet(net);
-}
-
-void slirp_output(void *opaque, const uint8_t *pkt, int pkt_len)
-{
-    EthernetDevice *net = opaque;
-    return net->device_write_packet(net, pkt, pkt_len);
-}
-
-static void slirp_select_fill1(EthernetDevice *net, int *pfd_max,
-                               fd_set *rfds, fd_set *wfds, fd_set *efds,
-                               int *pdelay)
-{
-    Slirp *slirp_state = net->opaque;
-    slirp_select_fill(slirp_state, pfd_max, rfds, wfds, efds);
-}
-
-static void slirp_select_poll1(EthernetDevice *net, 
-                               fd_set *rfds, fd_set *wfds, fd_set *efds,
-                               int select_ret)
-{
-    Slirp *slirp_state = net->opaque;
-    slirp_select_poll(slirp_state, rfds, wfds, efds, (select_ret <= 0));
-}
-
-static EthernetDevice *slirp_open(void)
-{
-    EthernetDevice *net;
-    struct in_addr net_addr  = { .s_addr = htonl(0x0a000200) }; /* 10.0.2.0 */
-    struct in_addr mask = { .s_addr = htonl(0xffffff00) }; /* 255.255.255.0 */
-    struct in_addr host = { .s_addr = htonl(0x0a000202) }; /* 10.0.2.2 */
-    struct in_addr dhcp = { .s_addr = htonl(0x0a00020f) }; /* 10.0.2.15 */
-    struct in_addr dns  = { .s_addr = htonl(0x0a000203) }; /* 10.0.2.3 */
-    const char *bootfile = NULL;
-    const char *vhostname = NULL;
-    int restricted = 0;
-    
-    if (slirp_state) {
-        fprintf(stderr, "Only a single slirp instance is allowed\n");
-        return NULL;
-    }
-    net = mallocz(sizeof(*net));
-
-    slirp_state = slirp_init(restricted, net_addr, mask, host, vhostname,
-                             "", bootfile, dhcp, dns, net);
-    
-    net->mac_addr[0] = 0x02;
-    net->mac_addr[1] = 0x00;
-    net->mac_addr[2] = 0x00;
-    net->mac_addr[3] = 0x00;
-    net->mac_addr[4] = 0x00;
-    net->mac_addr[5] = 0x01;
-    net->opaque = slirp_state;
-    net->write_packet = slirp_write_packet;
-    net->select_fill = slirp_select_fill1;
-    net->select_poll = slirp_select_poll1;
-    
-    return net;
-}
-
-#endif /* CONFIG_SLIRP */
 
 #define MAX_EXEC_CYCLE 500000
 #define MAX_SLEEP_TIME 10 /* in ms */
@@ -786,13 +705,6 @@ int main(int argc, char **argv)
     }
 
     for(i = 0; i < p->eth_count; i++) {
-#ifdef CONFIG_SLIRP
-        if (!strcmp(p->tab_eth[i].driver, "user")) {
-            p->tab_eth[i].net = slirp_open();
-            if (!p->tab_eth[i].net)
-                exit(1);
-        } else
-#endif
 #if !defined(_WIN32) && !defined(__APPLE__)
         if (!strcmp(p->tab_eth[i].driver, "tap")) {
             p->tab_eth[i].net = tun_open(p->tab_eth[i].ifname);

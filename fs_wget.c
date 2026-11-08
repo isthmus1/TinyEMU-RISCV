@@ -535,87 +535,6 @@ void fs_wget_file2(FSDevice *fs, FSFile *f, const char *url,
 /***********************************************/
 /* PBKDF2 */
 
-#ifdef USE_BUILTIN_CRYPTO
-
-#define HMAC_BLOCK_SIZE 64
-
-typedef struct {
-    SHA256_CTX ctx;
-    uint8_t K[HMAC_BLOCK_SIZE + SHA256_DIGEST_LENGTH];
-} HMAC_SHA256_CTX;
-
-void hmac_sha256_init(HMAC_SHA256_CTX *s, const uint8_t *key, int key_len)
-{
-    int i, l;
-    
-    if (key_len > HMAC_BLOCK_SIZE) {
-        SHA256(key, key_len, s->K);
-        l = SHA256_DIGEST_LENGTH;
-    } else {
-        memcpy(s->K, key, key_len);
-        l = key_len;
-    }
-    memset(s->K + l, 0, HMAC_BLOCK_SIZE - l);
-    for(i = 0; i < HMAC_BLOCK_SIZE; i++)
-        s->K[i] ^= 0x36;
-    SHA256_Init(&s->ctx);
-    SHA256_Update(&s->ctx, s->K, HMAC_BLOCK_SIZE);
-}
-
-void hmac_sha256_update(HMAC_SHA256_CTX *s, const uint8_t *buf, int len)
-{
-    SHA256_Update(&s->ctx, buf, len);
-}
-
-/* out has a length of SHA256_DIGEST_LENGTH */
-void hmac_sha256_final(HMAC_SHA256_CTX *s, uint8_t *out)
-{
-    int i;
-    
-    SHA256_Final(s->K + HMAC_BLOCK_SIZE, &s->ctx);
-    for(i = 0; i < HMAC_BLOCK_SIZE; i++)
-        s->K[i] ^= (0x36 ^ 0x5c);
-    SHA256(s->K, HMAC_BLOCK_SIZE + SHA256_DIGEST_LENGTH, out);
-}
-
-#define SALT_LEN_MAX 32
-
-void pbkdf2_hmac_sha256(const uint8_t *pwd, int pwd_len,
-                        const uint8_t *salt, int salt_len,
-                        int iter, int key_len, uint8_t *out)
-{
-    uint8_t F[SHA256_DIGEST_LENGTH], U[SALT_LEN_MAX + 4];
-    HMAC_SHA256_CTX ctx;
-    int it, U_len, j, l;
-    uint32_t i;
-    
-    assert(salt_len <= SALT_LEN_MAX);
-    i = 1;
-    while (key_len > 0) {
-        memset(F, 0, SHA256_DIGEST_LENGTH);
-        memcpy(U, salt, salt_len);
-        U[salt_len] = i >> 24;
-        U[salt_len + 1] = i >> 16;
-        U[salt_len + 2] = i >> 8;
-        U[salt_len + 3] = i;
-        U_len = salt_len + 4;
-        for(it = 0; it < iter; it++) {
-            hmac_sha256_init(&ctx, pwd, pwd_len);
-            hmac_sha256_update(&ctx, U, U_len);
-            hmac_sha256_final(&ctx, U);
-            for(j = 0; j < SHA256_DIGEST_LENGTH; j++)
-                F[j] ^= U[j];
-            U_len = SHA256_DIGEST_LENGTH;
-        }
-        l = min_int(key_len, SHA256_DIGEST_LENGTH);
-        memcpy(out, F, l);
-        out += l;
-        key_len -= l;
-        i++;
-    }
-}
-
-#else
 
 void pbkdf2_hmac_sha256(const uint8_t *pwd, int pwd_len,
                         const uint8_t *salt, int salt_len,
@@ -625,4 +544,3 @@ void pbkdf2_hmac_sha256(const uint8_t *pwd, int pwd_len,
                       iter, EVP_sha256(), key_len, out);
 }
 
-#endif /* !USE_BUILTIN_CRYPTO */

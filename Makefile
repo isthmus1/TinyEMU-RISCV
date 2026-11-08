@@ -41,7 +41,7 @@ CONFIG_INT128=y
 # win32 build (not usable yet)
 #CONFIG_WIN32=y
 # user space network redirector
-CONFIG_SLIRP=y
+#CONFIG_SLIRP=y
 # if set, you can pass a compressed cpio archive as initramfs. zlib
 # must be installed.
 CONFIG_COMPRESSED_INITRAMFS=y

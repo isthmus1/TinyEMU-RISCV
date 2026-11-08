@@ -21,18 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#if defined(EMSCRIPTEN)
-#define USE_BUILTIN_CRYPTO
-#endif
-
-#ifdef USE_BUILTIN_CRYPTO
-#include "aes.h"
-#include "sha256.h"
-#else
 #include <openssl/aes.h>
 #include <openssl/sha.h>
 #include <openssl/evp.h>
-#endif
 #ifdef _WIN32
 #include <winsock2.h>
 #endif
