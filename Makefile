@@ -46,7 +46,7 @@ PROGS=temu
 
 all: $(PROGS)
 
-EMU_OBJS:=virtio.o pci.o fs.o cutils.o iomem.o simplefb.o \
+EMU_OBJS:=virtio.o fs.o cutils.o iomem.o simplefb.o \
     json.o machine.o temu.o elf.o fs_disk.o \
     riscv_machine.o riscv_cpu.o softfp.o
 EMU_LIBS=-lrt

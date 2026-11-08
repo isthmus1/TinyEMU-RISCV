@@ -27,7 +27,6 @@
 #include <sys/select.h>
 
 #include "iomem.h"
-#include "pci.h"
 
 #define VIRTIO_PAGE_SIZE 4096
 
@@ -44,9 +43,6 @@ typedef uint32_t virtio_phys_addr_t;
 #endif
 
 typedef struct {
-    /* PCI only: */
-    PCIBus *pci_bus;
-    /* MMIO only: */
     PhysMemoryMap *mem_map;
     uint64_t addr;
     IRQSignal *irq;
