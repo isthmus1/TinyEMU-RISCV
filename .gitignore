@@ -1,10 +1,10 @@
 # Build products
 temu
-libtemu.a
-build_filelist
-splitimg
 *.o
 *.d
 
-# macOS-specific
-.DS_Store
+# Guest files downloaded by guest/fetch.sh
+guest/cache/
+
+# Boot-check logs and screenshots
+out/
