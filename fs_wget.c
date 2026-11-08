@@ -39,6 +39,9 @@
 #if defined(EMSCRIPTEN)
 #include <emscripten.h>
 #else
+/* curl 8.x's type-checking macros expand inside its own multi.h
+   prototypes under GCC; the checks are optional. */
+#define CURL_DISABLE_TYPECHECK
 #include <curl/multi.h>
 #endif
 
