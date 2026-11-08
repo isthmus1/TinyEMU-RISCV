@@ -25,6 +25,10 @@
 #define SOFTFP_H
 
 #include <inttypes.h>
+
+/* The 128-bit float format and 128-bit integer conversions are only used
+   by RV128, which TinyEMU-RISCV does not emulate. Define
+   CONFIG_SOFTFP_128 to build them anyway (needs a compiler with int128). */
 #include "cutils.h"
 
 typedef enum {
@@ -60,7 +64,7 @@ typedef enum {
 
 typedef uint32_t sfloat32;
 typedef uint64_t sfloat64;
-#ifdef HAVE_INT128
+#ifdef CONFIG_SOFTFP_128
 typedef uint128_t sfloat128;
 #endif
 
@@ -88,7 +92,7 @@ int32_t cvt_sf32_i32(sfloat32 a, RoundingModeEnum rm, uint32_t *pfflags);
 uint32_t cvt_sf32_u32(sfloat32 a, RoundingModeEnum rm, uint32_t *pfflags);
 int64_t cvt_sf32_i64(sfloat32 a, RoundingModeEnum rm, uint32_t *pfflags);
 uint64_t cvt_sf32_u64(sfloat32 a, RoundingModeEnum rm, uint32_t *pfflags);
-#ifdef HAVE_INT128
+#ifdef CONFIG_SOFTFP_128
 int128_t cvt_sf32_i128(sfloat32 a, RoundingModeEnum rm, uint32_t *pfflags);
 uint128_t cvt_sf32_u128(sfloat32 a, RoundingModeEnum rm, uint32_t *pfflags);
 #endif
@@ -96,7 +100,7 @@ sfloat32 cvt_i32_sf32(int32_t a, RoundingModeEnum rm, uint32_t *pfflags);
 sfloat32 cvt_u32_sf32(uint32_t a, RoundingModeEnum rm, uint32_t *pfflags);
 sfloat32 cvt_i64_sf32(int64_t a, RoundingModeEnum rm, uint32_t *pfflags);
 sfloat32 cvt_u64_sf32(uint64_t a, RoundingModeEnum rm, uint32_t *pfflags);
-#ifdef HAVE_INT128
+#ifdef CONFIG_SOFTFP_128
 sfloat32 cvt_i128_sf32(int128_t a, RoundingModeEnum rm, uint32_t *pfflags);
 sfloat32 cvt_u128_sf32(uint128_t a, RoundingModeEnum rm, uint32_t *pfflags);
 #endif
@@ -125,7 +129,7 @@ int32_t cvt_sf64_i32(sfloat64 a, RoundingModeEnum rm, uint32_t *pfflags);
 uint32_t cvt_sf64_u32(sfloat64 a, RoundingModeEnum rm, uint32_t *pfflags);
 int64_t cvt_sf64_i64(sfloat64 a, RoundingModeEnum rm, uint32_t *pfflags);
 uint64_t cvt_sf64_u64(sfloat64 a, RoundingModeEnum rm, uint32_t *pfflags);
-#ifdef HAVE_INT128
+#ifdef CONFIG_SOFTFP_128
 int128_t cvt_sf64_i128(sfloat64 a, RoundingModeEnum rm, uint32_t *pfflags);
 uint128_t cvt_sf64_u128(sfloat64 a, RoundingModeEnum rm, uint32_t *pfflags);
 #endif
@@ -133,14 +137,14 @@ sfloat64 cvt_i32_sf64(int32_t a, RoundingModeEnum rm, uint32_t *pfflags);
 sfloat64 cvt_u32_sf64(uint32_t a, RoundingModeEnum rm, uint32_t *pfflags);
 sfloat64 cvt_i64_sf64(int64_t a, RoundingModeEnum rm, uint32_t *pfflags);
 sfloat64 cvt_u64_sf64(uint64_t a, RoundingModeEnum rm, uint32_t *pfflags);
-#ifdef HAVE_INT128
+#ifdef CONFIG_SOFTFP_128
 sfloat64 cvt_i128_sf64(int128_t a, RoundingModeEnum rm, uint32_t *pfflags);
 sfloat64 cvt_u128_sf64(uint128_t a, RoundingModeEnum rm, uint32_t *pfflags);
 #endif
 
 /* 128 bit floats */
 
-#ifdef HAVE_INT128
+#ifdef CONFIG_SOFTFP_128
 
 #define FSIGN_MASK128 ((uint128_t)1 << 127)
 

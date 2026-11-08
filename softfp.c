@@ -52,7 +52,7 @@ static inline int clz64(uint64_t a)
     return r;
 }
 
-#ifdef HAVE_INT128
+#ifdef CONFIG_SOFTFP_128
 static inline int clz128(uint128_t a)
 {
     int r;
@@ -78,7 +78,7 @@ static inline int clz128(uint128_t a)
 #define F_SIZE 64
 #include "softfp_template.h"
 
-#ifdef HAVE_INT128
+#ifdef CONFIG_SOFTFP_128
 
 #define F_SIZE 128
 #include "softfp_template.h"

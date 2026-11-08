@@ -1089,7 +1089,7 @@ uint64_t glue(glue(cvt_sf, F_SIZE), _sf64)(F_UINT a, RoundingModeEnum rm,
 #define ICVT_SIZE 64
 #include "softfp_template_icvt.h"
 
-#ifdef HAVE_INT128
+#ifdef CONFIG_SOFTFP_128
 #define ICVT_SIZE 128
 #include "softfp_template_icvt.h"
 #endif

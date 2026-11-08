@@ -33,12 +33,8 @@
 #include "iomem.h"
 #include "riscv_cpu.h"
 
-#ifndef MAX_XLEN
-#error MAX_XLEN must be defined
-#endif
-#ifndef CONFIG_RISCV_MAX_XLEN
-#error CONFIG_RISCV_MAX_XLEN must be defined
-#endif
+/* TinyEMU-RISCV emulates RV64 only: XLEN is always 64. */
+#define MAX_XLEN 64
 
 //#define DUMP_INVALID_MEM_ACCESS
 //#define DUMP_MMU_EXCEPTIONS
@@ -687,11 +683,12 @@ static void set_mstatus(RISCVCPUState *s, target_ulong val)
 #if MAX_XLEN >= 64
     {
         int uxl, sxl;
+        /* WARL: only XLEN=64 is supported, so other values are ignored */
         uxl = (val >> MSTATUS_UXL_SHIFT) & 3;
-        if (uxl >= 1 && uxl <= get_base_from_xlen(MAX_XLEN))
+        if (uxl == get_base_from_xlen(MAX_XLEN))
             mask |= MSTATUS_UXL_MASK;
-        sxl = (val >> MSTATUS_UXL_SHIFT) & 3;
-        if (sxl >= 1 && sxl <= get_base_from_xlen(MAX_XLEN))
+        sxl = (val >> MSTATUS_SXL_SHIFT) & 3;
+        if (sxl == get_base_from_xlen(MAX_XLEN))
             mask |= MSTATUS_SXL_MASK;
     }
 #endif
@@ -963,7 +960,8 @@ static int csr_write(RISCVCPUState *s, uint32_t csr, target_ulong val)
         {
             int new_mxl;
             new_mxl = (val >> (s->cur_xlen - 2)) & 3;
-            if (new_mxl >= 1 && new_mxl <= get_base_from_xlen(MAX_XLEN)) {
+            /* WARL: only XLEN=64 is supported */
+            if (new_mxl == get_base_from_xlen(MAX_XLEN)) {
                 /* Note: misa is only modified in M level, so cur_xlen
                    = 2^(mxl + 4) */
                 if (s->mxl != new_mxl) {
@@ -1213,18 +1211,51 @@ static inline uint32_t get_field1(uint32_t val, int src_pos,
         return (val >> (src_pos - dst_pos)) & mask;
 }
 
-#define XLEN 32
-#include "riscv_cpu_template.h"
+/* 32-bit division helpers for RV64's DIVW, DIVUW, REMW and REMUW.
+   Upstream got them from the XLEN=32 instance of riscv_cpu_template.h,
+   which this RV64-only build no longer includes; same definitions. */
+static inline int32_t div32(int32_t a, int32_t b)
+{
+    if (b == 0) {
+        return -1;
+    } else if (a == ((int32_t)1 << (32 - 1)) && b == -1) {
+        return a;
+    } else {
+        return a / b;
+    }
+}
 
-#if MAX_XLEN >= 64
+static inline uint32_t divu32(uint32_t a, uint32_t b)
+{
+    if (b == 0) {
+        return -1;
+    } else {
+        return a / b;
+    }
+}
+
+static inline int32_t rem32(int32_t a, int32_t b)
+{
+    if (b == 0) {
+        return a;
+    } else if (a == ((int32_t)1 << (32 - 1)) && b == -1) {
+        return 0;
+    } else {
+        return a % b;
+    }
+}
+
+static inline uint32_t remu32(uint32_t a, uint32_t b)
+{
+    if (b == 0) {
+        return a;
+    } else {
+        return a % b;
+    }
+}
+
 #define XLEN 64
 #include "riscv_cpu_template.h"
-#endif
-
-#if MAX_XLEN >= 128
-#define XLEN 128
-#include "riscv_cpu_template.h"
-#endif
 
 static void glue(riscv_cpu_interp, MAX_XLEN)(RISCVCPUState *s, int n_cycles)
 {
@@ -1238,19 +1269,9 @@ static void glue(riscv_cpu_interp, MAX_XLEN)(RISCVCPUState *s, int n_cycles)
            (int)(timeout - s->insn_counter) > 0) {
         n_cycles = timeout - s->insn_counter;
         switch(s->cur_xlen) {
-        case 32:
-            riscv_cpu_interp_x32(s, n_cycles);
-            break;
-#if MAX_XLEN >= 64
         case 64:
             riscv_cpu_interp_x64(s, n_cycles);
             break;
-#endif
-#if MAX_XLEN >= 128
-        case 128:
-            riscv_cpu_interp_x128(s, n_cycles);
-            break;
-#endif
         default:
             abort();
         }
@@ -1345,33 +1366,10 @@ const RISCVCPUClass glue(riscv_cpu_class, MAX_XLEN) = {
     glue(riscv_cpu_flush_tlb_write_range_ram, MAX_XLEN),
 };
 
-#if CONFIG_RISCV_MAX_XLEN == MAX_XLEN
 RISCVCPUState *riscv_cpu_init(PhysMemoryMap *mem_map, int max_xlen)
 {
-    const RISCVCPUClass *c;
-    switch(max_xlen) {
-        /* with emscripten we compile a single CPU */
-#if defined(EMSCRIPTEN)
-    case MAX_XLEN:
-        c = &glue(riscv_cpu_class, MAX_XLEN);
-        break;
-#else
-    case 32:
-        c = &riscv_cpu_class32;
-        break;
-    case 64:
-        c = &riscv_cpu_class64;
-        break;
-#if CONFIG_RISCV_MAX_XLEN == 128
-    case 128:
-        c = &riscv_cpu_class128;
-        break;
-#endif
-#endif /* !EMSCRIPTEN */
-    default:
+    if (max_xlen != 64)
         return NULL;
-    }
-    return c->riscv_cpu_init(mem_map);
+    return riscv_cpu_class64.riscv_cpu_init(mem_map);
 }
-#endif /* CONFIG_RISCV_MAX_XLEN == MAX_XLEN */
 

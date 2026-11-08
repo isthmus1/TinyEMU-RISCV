@@ -27,11 +27,6 @@
 CONFIG_FS_NET=y
 # SDL support (optional)
 CONFIG_SDL=y
-# if set, compile the 128 bit emulator. Note: the 128 bit target does
-# not compile if gcc does not support the int128 type (32 bit hosts).
-CONFIG_INT128=y
-# build x86 emulator
-#CONFIG_X86EMU=y
 # macOS build
 #CONFIG_MACOS=y
 # iOS build
@@ -136,17 +131,7 @@ LDFLAGS+=-mwindows
 endif
 endif
 
-EMU_OBJS+=riscv_machine.o softfp.o riscv_cpu32.o riscv_cpu64.o
-ifdef CONFIG_INT128
-override CFLAGS+=-DCONFIG_RISCV_MAX_XLEN=128
-EMU_OBJS+=riscv_cpu128.o
-else
-override CFLAGS+=-DCONFIG_RISCV_MAX_XLEN=64
-endif
-ifdef CONFIG_X86EMU
-override CFLAGS+=-DCONFIG_X86EMU
-EMU_OBJS+=x86_cpu.o x86_machine.o ide.o ps2.o vmmouse.o pckbd.o vga.o
-endif
+EMU_OBJS+=riscv_machine.o softfp.o riscv_cpu.o
 
 ifdef CONFIG_COMPRESSED_INITRAMFS
 EMU_OBJS+=compress.o
@@ -160,15 +145,6 @@ temu$(EXE): $(EMU_OBJS)
 libtemu.a: $(EMU_OBJS)
 	ar ru $@ $^
 	ranlib $@
-
-riscv_cpu32.o: riscv_cpu.c
-	$(CC) $(CFLAGS) -DMAX_XLEN=32 -c -o $@ $<
-
-riscv_cpu64.o: riscv_cpu.c
-	$(CC) $(CFLAGS) -DMAX_XLEN=64 -c -o $@ $<
-
-riscv_cpu128.o: riscv_cpu.c
-	$(CC) $(CFLAGS) -DMAX_XLEN=128 -c -o $@ $<
 
 build_filelist: build_filelist.o fs_utils.o cutils.o
 	$(CC) -o $@ $^ -lm $(LDFLAGS)

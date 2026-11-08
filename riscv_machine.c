@@ -884,12 +884,8 @@ static VirtMachine *riscv_machine_init(const VirtMachineParams *p)
     VIRTIOBusDef vbus_s, *vbus = &vbus_s;
 
 
-    if (!strcmp(p->machine_name, "riscv32")) {
-        max_xlen = 32;
-    } else if (!strcmp(p->machine_name, "riscv64")) {
+    if (!strcmp(p->machine_name, "riscv64")) {
         max_xlen = 64;
-    } else if (!strcmp(p->machine_name, "riscv128")) {
-        max_xlen = 128;
     } else {
         vm_error("unsupported machine: %s\n", p->machine_name);
         return NULL;
@@ -1104,7 +1100,7 @@ static void riscv_vm_send_mouse_event(VirtMachine *s1, int dx, int dy, int dz,
 }
 
 const VirtMachineClass riscv_machine_class = {
-    "riscv32,riscv64,riscv128",
+    "riscv64",
     riscv_machine_set_defaults,
     riscv_machine_init,
     riscv_machine_end,
